@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>interconnecting-flights-application</artifactId>
+	<packaging>jar</packaging>
+	<name>interconnecting-flights-application</name>
+	<description>Application module for promotions provider and direct product</description>
+
+	<parent>
+		<groupId>com.ryanair.es</groupId>
+		<artifactId>interconnecting-flights</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.ryanair.es</groupId>
+			<artifactId>interconnecting-flights-infrastructure</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}_${project.version}</finalName>
+	</build>
+
+</project>
