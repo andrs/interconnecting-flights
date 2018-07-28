@@ -1,4 +1,4 @@
-package com.ryanair.es.interconnecting.flights.application;
+package com.ryanair.es.interconnecting.flights.application.converter;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;

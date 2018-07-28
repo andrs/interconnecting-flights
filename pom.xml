@@ -6,7 +6,7 @@
     <artifactId>interconnecting-flights</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>InterconnectingFlights boot</name>
+    <name>InterconnectingFlights Application</name>
     <description>
         Interconnecting flights
     </description>
@@ -15,7 +15,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.0.3.RELEASE</version>
-        <relativePath />  <!-- lookup parent from repository -->
+        <relativePath />                <!-- lookup parent from repository -->
     </parent>
 
     <modules>
