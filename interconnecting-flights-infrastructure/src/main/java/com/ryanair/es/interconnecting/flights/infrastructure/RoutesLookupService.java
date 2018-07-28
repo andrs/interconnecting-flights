@@ -26,7 +26,7 @@ public class RoutesLookupService {
 
     @Async
     public CompletableFuture<List<Route>> findRoute() throws InterruptedException {
-        log.info("Looking up routes ");
+        log.info("Looking up routes ...");
         ResponseEntity<List<Route>> rateResponse = restTemplate.exchange(ENDPOINT_ROUTES, HttpMethod.GET, null,
                 new ParameterizedTypeReference<List<Route>>() { });
         List<Route> results = rateResponse.getBody();
