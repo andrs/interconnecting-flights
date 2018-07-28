@@ -6,6 +6,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
+
 public class InterconnectionDateTimeFormatterTest {
 
     @Before
@@ -73,6 +75,18 @@ public class InterconnectionDateTimeFormatterTest {
         String arrivalDateTime = "2018-03-01T11:59";
 
         Assert.assertFalse(InterconnectionDateTimeFormatter.isDate2GreaterThanTwoHours(departureDateTime, arrivalDateTime));
+    }
+
+    public void isDateGreaterThanTenYearsSuccessTest() {
+        LocalDateTime now = LocalDateTime.now();
+
+        Assert.assertFalse(InterconnectionDateTimeFormatter.isDateGreaterThanTenYears(now.toString()));
+    }
+
+    public void isDateGreaterThanTenYearsErrorTest() {
+        String arrivalDateTime = "2024-03-01T11:59";
+
+        Assert.assertFalse(InterconnectionDateTimeFormatter.isDateGreaterThanTenYears(arrivalDateTime));
     }
 
 }

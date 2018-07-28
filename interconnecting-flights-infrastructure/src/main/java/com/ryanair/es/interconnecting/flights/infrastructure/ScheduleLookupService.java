@@ -28,10 +28,9 @@ public class ScheduleLookupService {
     @Async
     public CompletableFuture<Schedule> findSchedule(final String departure, final String arrival, final String year,
                                                           final String month) throws InterruptedException {
-        log.info("Looking up schedule ... ");
         String url = String.format(END_POINT_SCHEDULE , departure, arrival, year, month);
 
-        log.info("Looking up routes " + url);
+        log.info("Looking up schedule ... " + url);
 
         ResponseEntity<Schedule> rateResponse = restTemplate1.exchange(url, HttpMethod.GET, null,
                 new ParameterizedTypeReference<Schedule>() { });

@@ -1,5 +1,6 @@
 package com.ryanair.es.interconnecting.flights.application;
 
+import com.ryanair.es.interconnecting.flights.application.date.InterconnectionDateTimeFormatter;
 import com.ryanair.es.interconnecting.flights.domain.response.Leg;
 import com.ryanair.es.interconnecting.flights.domain.response.ResponseInterconnection;
 import com.ryanair.es.interconnecting.flights.domain.routes.Route;
@@ -7,15 +8,19 @@ import com.ryanair.es.interconnecting.flights.domain.schedules.Schedule;
 import com.ryanair.es.interconnecting.flights.infrastructure.RoutesLookupService;
 import com.ryanair.es.interconnecting.flights.infrastructure.ScheduleLookupService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,91 +39,128 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
     @Override
     public List<ResponseInterconnection> buildInterconnections(final String departure, final String arrival,
-                                                               final String departureDateTime, final String arrivalDateTime) {
+                                                   final String departureDateTime, final String arrivalDateTime) {
 
+        // validate dates
+        if (InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime) == null
+                || InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime) == null) {
+            log.error("Error: departure date time or arrival date time are wrong!");
+            return new ArrayList<>();
+        }
+
+        if (!InterconnectionDateTimeFormatter.isDate1BeforeDate2(departureDateTime, arrivalDateTime) ) {
+            log.error("Error, arrival date time must be bigger than departure date time");
+            return new ArrayList<>();
+        }
+
+        // check diff dates
+        if ( !InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime).minusYears(4).isBefore(LocalDateTime.now()) ) {
+            log.error("Error, arrival is too big");
+            return new ArrayList<>();
+        }
+
+
+        List<ResponseInterconnection> interconnections = new ArrayList<>();
+        List<Leg> legs = new ArrayList<>();
+
+        final List<Route>  emptyConnectingAirporRoutes = fetchRoutesFromApi();
+        for (Route route : emptyConnectingAirporRoutes) {
+            String from = route.getAirportFrom();
+            String to = route.getAirportTo();
+
+            if (StringUtils.isEmpty(from) || !from.equalsIgnoreCase(departure) || StringUtils.isEmpty(to)
+                                || !to.equalsIgnoreCase(arrival)) {
+                continue;
+            }
+
+            LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime);
+            LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
+
+
+            ResponseInterconnection interconnection = new ResponseInterconnection();
+            while (departureDate.isBefore(arrivalDate)) {
+                // it's a ordinal 0 - 11
+                int month = departureDate.getMonth().ordinal() + 1;
+                int year = departureDate.getYear();
+
+                final Schedule schedule = fetchSchedules(from, to, String.valueOf(year), String.valueOf(month));
+                if (schedule != null) {
+                    schedule.getDays().forEach(d -> {
+                        d.getFlights().forEach(f -> {
+                            Leg leg = new Leg();
+                            leg.setArrivalAirport(to);
+                            leg.setArrivalDateTime(buildLocalDateTime(year, month, d.getDay(), f.getArrivalTime()).toString());
+
+                            leg.setDepartureAirport(from);
+                            leg.setDepartureDateTime(buildLocalDateTime(year, month, d.getDay(), f.getDepartureTime()).toString());
+
+                            legs.add(leg);
+                        });
+                    });
+                }
+
+                // increase month
+                departureDate = departureDate.plusMonths(1);
+
+                interconnection.setStops(Integer.valueOf(0));
+                interconnection.setLegs(legs);
+
+                interconnections.add(interconnection);
+            }
+
+        }
+
+        return interconnections;
+    }
+
+    private Schedule fetchSchedules(final String departure, final String arrival, final String year, final String month)  {
 
         try {
-            // Start the clock
-            long start = System.currentTimeMillis();
+
+            CompletableFuture<Schedule> futureSchedule = scheduleLookupService.findSchedule(departure, arrival, year, month);
+
+            return futureSchedule.get();
+
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error calling API endpoint schedule " + e);
+            return null;
+        }
+    }
+
+    private List<Route> fetchRoutesFromApi() {
+        final List<Route> routes;
+
+        try {
 
             CompletableFuture<List<Route>> futureRoutes = routesService.findRoute();
 
-/*
-            CompletableFuture<Schedule> futureSchedule
-                    = scheduleLookupService.findSchedule("DUB", "STN", "2018", "8");
-*/
-            // end clock
-            log.info("Elapsed time: " + (System.currentTimeMillis() - start));
+            routes = Collections.unmodifiableList(futureRoutes.get());
 
-            final List<Route> routes = Collections.unmodifiableList(futureRoutes.get());
-
-            final Schedule schedule = fetchSchedules(departure, arrival, departureDateTime, arrivalDateTime);
-
-            //schedule = futureSchedule.get();
-
-            String str = "str";
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Error calling API endpoint " + e);
+            log.error("Error calling API endpoint route " + e);
             return new ArrayList<>();
         }
 
 
         // only routes with empty connectingAirport should be used
-
-
-        return buildResponseInterconnection();
+        return Collections.unmodifiableList(filterRoutes(routes, isConnectingAirportEmpty()));
     }
 
-    private Schedule fetchSchedules(final String departure, final String arrival, final String departureDateTime,
-                                    final String arrivalDateTime) throws InterruptedException, ExecutionException {
-
-        /*
-        CompletableFuture<Schedule> futureSchedule
-                    = scheduleLookupService.findSchedule(departure, arrival, departureDateTime, arrivalDateTime);
-        */
-        CompletableFuture<Schedule> futureSchedule
-                = scheduleLookupService.findSchedule("DUB", "STN", "2018", "8");
-
-        return futureSchedule.get();
+    private static Predicate<Route> isConnectingAirportEmpty() {
+        return p -> StringUtils.isEmpty(p.getConnectingAirport());
     }
 
-    private List<ResponseInterconnection> buildResponseInterconnection() {
-
-        ResponseInterconnection interconnection1 = new ResponseInterconnection();
-        List<Leg> legs1 = new ArrayList<>();
-        Leg leg1 = new Leg();
-        leg1.setArrivalAirport("WRO");
-        leg1.setArrivalDateTime("2018-03-01T16:40");
-        leg1.setDepartureAirport("DUB");
-        leg1.setDepartureDateTime("2018-03-01T12:40");
-        legs1.add(leg1);
-
-        interconnection1.setLegs(legs1);
-        interconnection1.setStops(Integer.valueOf(0));
-
-
-        ResponseInterconnection interconnection2 = new ResponseInterconnection();
-        List<Leg> legs2 = new ArrayList<>();
-        Leg leg11 = new Leg();
-        leg11.setArrivalAirport("STN");
-        leg11.setArrivalDateTime("2018-03-01T07:35");
-        leg11.setDepartureAirport("DUB");
-        leg11.setDepartureDateTime("2018-03-01T06:25");
-        legs2.add(leg1);
-
-        Leg leg12 = new Leg();
-        leg12.setArrivalAirport("WRO");
-        leg12.setArrivalDateTime("2018-03-01T13:20");
-        leg12.setDepartureAirport("STN");
-        leg12.setDepartureDateTime("2018-03-01T09:50");
-        legs2.add(leg12);
-
-        interconnection2.setLegs(legs2);
-        interconnection2.setStops(Integer.valueOf(1));
-
-        List<ResponseInterconnection> response = new ArrayList<>();
-        response.add(interconnection1);
-        response.add(interconnection2);
-        return response;
+    private static List<Route> filterRoutes(List<Route> routes, Predicate<Route> predicate) {
+        return routes.stream().filter( predicate ).collect(Collectors.<Route>toList());
     }
+
+    private LocalDateTime buildLocalDateTime(int year, int month, int day, String hour) {
+        if (hour.length() != 5) {
+            return null;
+        }
+
+        String[] parts = hour.split(":");
+        return LocalDateTime.of(year, month, day, Integer.valueOf(parts[0]), Integer.valueOf(parts[1]));
+    }
+
 }

@@ -48,7 +48,9 @@ public class InterconnectionController {
         List<ResponseInterconnection> response
                 = interconnectionService.buildInterconnections(departure, arrival, departureDateTime, arrivalDateTime);
 
-        return new ResponseEntity (response, HttpStatus.OK);
+        HttpStatus status = HttpStatus.OK;
 
+        return new ResponseEntity (response, HttpStatus.OK);
     }
+
 }
