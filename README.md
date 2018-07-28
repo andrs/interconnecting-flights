@@ -12,5 +12,6 @@ deploy a war file in tomcat, **or test** with mvn spring-boot:run inside boot mo
 
 -- interfaz web: http://localhost:8080/flights/
 
--- examples
-curl -X GET http://localhost:8080/flights/v1/test
+-- example REST interface
+http://localhost:8080/flights/interconnections?departure=DUB&arrival=WRO&departureDateTime=2018-08-01T07:00&arrivalDateTime=2018-08-03T21:00
+

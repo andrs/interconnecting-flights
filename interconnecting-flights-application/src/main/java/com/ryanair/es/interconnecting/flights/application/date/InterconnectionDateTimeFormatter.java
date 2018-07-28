@@ -21,9 +21,16 @@ public class InterconnectionDateTimeFormatter {
         LocalDateTime dt1 = parseStringDateTime(date1);
         LocalDateTime dt2 = parseStringDateTime(date2);
 
-        boolean b = dt1.isBefore(dt2);
+        return dt1.isBefore(dt2);
+    }
 
-        return b;
+    public static boolean isDate2GreaterThanTwoHours(final String date1, final String date2) {
+        LocalDateTime dt1 = parseStringDateTime(date1);
+        LocalDateTime dt2 = parseStringDateTime(date2);
+
+        dt2 = dt2.minusHours(2);
+
+        return dt1.isBefore(dt2);
     }
 
 }

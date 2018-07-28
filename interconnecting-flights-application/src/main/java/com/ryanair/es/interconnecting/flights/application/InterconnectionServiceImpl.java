@@ -58,8 +58,13 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
             String str = "str";
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            log.error("Error calling API endpoint " + e);
+            return new ArrayList<>();
         }
+
+
+        // only routes with empty connectingAirport should be used
+
 
         return buildResponseInterconnection();
     }
@@ -103,7 +108,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
         Leg leg12 = new Leg();
         leg12.setArrivalAirport("WRO");
-        leg12.setArrivalDateTime("2018-03-01T13:20\"");
+        leg12.setArrivalDateTime("2018-03-01T13:20");
         leg12.setDepartureAirport("STN");
         leg12.setDepartureDateTime("2018-03-01T09:50");
         legs2.add(leg12);
