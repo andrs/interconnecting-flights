@@ -19,6 +19,7 @@
 			<artifactId>interconnecting-flights-domain</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>

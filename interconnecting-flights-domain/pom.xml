@@ -5,7 +5,7 @@
     <artifactId>interconnecting-flights-domain</artifactId>
     <packaging>jar</packaging>
     <name>interconnecting-flights-domain</name>
-    <description>Domain module for hotels promotions microservice</description>
+    <description>interconnecting-flights domain module</description>
     <parent>
         <groupId>com.ryanair.es</groupId>
         <artifactId>interconnecting-flights</artifactId>
@@ -29,6 +29,10 @@
             <artifactId>validation-api</artifactId>
         </dependency>
         -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>

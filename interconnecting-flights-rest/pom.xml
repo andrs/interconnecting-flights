@@ -5,7 +5,7 @@
 	<artifactId>interconnecting-flights-rest</artifactId>
 	<packaging>jar</packaging>
 	<name>interconnecting-flights-rest</name>
-	<description>REST module for hotels promotion microservice</description>
+	<description>REST module interconnecting-flightse</description>
 
 	<parent>
 		<groupId>com.ryanair.es</groupId>
@@ -41,6 +41,9 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
+
+
+
 	</dependencies>
 
 	<build>
