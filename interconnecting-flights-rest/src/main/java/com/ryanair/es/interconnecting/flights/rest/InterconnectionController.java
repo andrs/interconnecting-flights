@@ -50,7 +50,11 @@ public class InterconnectionController {
 
         HttpStatus status = HttpStatus.OK;
 
-        return new ResponseEntity (response, HttpStatus.OK);
+        if (response.isEmpty()) {
+            status = HttpStatus.NO_CONTENT;
+        }
+
+        return new ResponseEntity (response, status);
     }
 
 }

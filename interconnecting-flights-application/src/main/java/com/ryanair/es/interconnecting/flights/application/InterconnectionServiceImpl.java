@@ -89,10 +89,10 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                         d.getFlights().forEach(f -> {
                             Leg leg = new Leg();
                             leg.setArrivalAirport(to);
-                            leg.setArrivalDateTime(buildLocalDateTime(year, month, d.getDay(), f.getArrivalTime()).toString());
+                            leg.setArrivalDateTime(buildLocalDateTime(year, schedule.getMonth(), d.getDay(), f.getArrivalTime()).toString());
 
                             leg.setDepartureAirport(from);
-                            leg.setDepartureDateTime(buildLocalDateTime(year, month, d.getDay(), f.getDepartureTime()).toString());
+                            leg.setDepartureDateTime(buildLocalDateTime(year, schedule.getMonth(), d.getDay(), f.getDepartureTime()).toString());
 
                             legs.add(leg);
                         });
@@ -160,7 +160,8 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         }
 
         String[] parts = hour.split(":");
-        return LocalDateTime.of(year, month, day, Integer.valueOf(parts[0]), Integer.valueOf(parts[1]));
+        LocalDateTime date = LocalDateTime.of(year, month, day, Integer.valueOf(parts[0]), Integer.valueOf(parts[1]));
+        return InterconnectionDateTimeFormatter.formatLocalDateTime(date);
     }
 
 }

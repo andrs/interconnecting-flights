@@ -3,19 +3,17 @@ package com.ryanair.es.interconnecting.flights.application.date;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 @Slf4j
 public class InterconnectionDateTimeFormatter {
 
-    public static final String FORMATTER_DATE_TIME = "yyyy-MM-dd'T'HH:mm";
+    private static final String FORMATTER_DATE_TIME = "yyyy-MM-dd'T'HH:mm";
+
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FORMATTER_DATE_TIME);
 
     public static LocalDateTime parseStringDateTime(final String date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FORMATTER_DATE_TIME);
-
         try {
             return LocalDateTime.parse(date, formatter);
         } catch (DateTimeParseException dtpe) {
@@ -40,6 +38,20 @@ public class InterconnectionDateTimeFormatter {
         return dt1.isBefore(dt2);
     }
 
+    public static LocalDateTime formatLocalDateTime(final LocalDateTime localDateTime) {
+        try {
+            return LocalDateTime.parse(localDateTime.toString(), formatter);
+        } catch (DateTimeParseException dtpe) {
+            log.error("Error parsing dates: " + dtpe);
+            return null;
+        }
+    }
+
+
+
+
+
+    /*
     public static boolean isDateGreaterThanTenYears(final String date1) {
         LocalDateTime dt1 = parseStringDateTime(date1);
 
@@ -50,5 +62,6 @@ public class InterconnectionDateTimeFormatter {
 
         return dt1.isBefore(now);
     }
+    */
 
 }

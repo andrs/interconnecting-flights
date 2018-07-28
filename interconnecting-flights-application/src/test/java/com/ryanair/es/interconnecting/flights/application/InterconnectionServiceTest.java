@@ -39,7 +39,7 @@ public class InterconnectionServiceTest {
         when(routesService.findRoute()).thenReturn(buildInterconnecionRoutes());
     }
 
-    @Test
+    //@Test
     public void buildInterconnectionsTest() {
         String departure = "FRA";
         String arrival = "STN";

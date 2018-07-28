@@ -77,16 +77,4 @@ public class InterconnectionDateTimeFormatterTest {
         Assert.assertFalse(InterconnectionDateTimeFormatter.isDate2GreaterThanTwoHours(departureDateTime, arrivalDateTime));
     }
 
-    public void isDateGreaterThanTenYearsSuccessTest() {
-        LocalDateTime now = LocalDateTime.now();
-
-        Assert.assertFalse(InterconnectionDateTimeFormatter.isDateGreaterThanTenYears(now.toString()));
-    }
-
-    public void isDateGreaterThanTenYearsErrorTest() {
-        String arrivalDateTime = "2024-03-01T11:59";
-
-        Assert.assertFalse(InterconnectionDateTimeFormatter.isDateGreaterThanTenYears(arrivalDateTime));
-    }
-
 }
