@@ -26,10 +26,13 @@ public class RoutesLookupService {
 
     @Async
     public CompletableFuture<List<Route>> findRoute() throws InterruptedException {
-        log.info("Looking up routes ...");
+        log.info("Looking up routes ..." + ENDPOINT_ROUTES);
+
         ResponseEntity<List<Route>> rateResponse = restTemplate.exchange(ENDPOINT_ROUTES, HttpMethod.GET, null,
                 new ParameterizedTypeReference<List<Route>>() { });
+
         List<Route> results = rateResponse.getBody();
+
         return CompletableFuture.completedFuture(results);
     }
 }

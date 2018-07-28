@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -41,27 +40,12 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     public List<ResponseInterconnection> buildInterconnections(final String departure, final String arrival,
                                                    final String departureDateTime, final String arrivalDateTime) {
 
-        // validate dates
-        if (InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime) == null
-                || InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime) == null) {
-            log.error("Error: departure date time or arrival date time are wrong!");
+        if (!validateImputDates(departureDateTime, arrivalDateTime)) {
+            log.error("Ups, maybe dates are wrong.");
             return new ArrayList<>();
         }
-
-        if (!InterconnectionDateTimeFormatter.isDate1BeforeDate2(departureDateTime, arrivalDateTime) ) {
-            log.error("Error, arrival date time must be bigger than departure date time");
-            return new ArrayList<>();
-        }
-
-        // check diff dates
-        if ( !InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime).minusYears(4).isBefore(LocalDateTime.now()) ) {
-            log.error("Error, arrival is too big");
-            return new ArrayList<>();
-        }
-
 
         List<ResponseInterconnection> interconnections = new ArrayList<>();
-        List<Leg> legs = new ArrayList<>();
 
         final List<Route>  emptyConnectingAirporRoutes = fetchRoutesFromApi();
         for (Route route : emptyConnectingAirporRoutes) {
@@ -87,6 +71,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                 if (schedule != null) {
                     schedule.getDays().forEach(d -> {
                         d.getFlights().forEach(f -> {
+                            List<Leg> legs = new ArrayList<>();
                             Leg leg = new Leg();
                             leg.setArrivalAirport(to);
                             leg.setArrivalDateTime(buildLocalDateTime(year, schedule.getMonth(), d.getDay(), f.getArrivalTime()).toString());
@@ -95,17 +80,17 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                             leg.setDepartureDateTime(buildLocalDateTime(year, schedule.getMonth(), d.getDay(), f.getDepartureTime()).toString());
 
                             legs.add(leg);
+
+                            interconnection.setStops(Integer.valueOf(0));
+                            interconnection.setLegs(legs);
+
+                            interconnections.add(interconnection);
                         });
                     });
                 }
 
                 // increase month
                 departureDate = departureDate.plusMonths(1);
-
-                interconnection.setStops(Integer.valueOf(0));
-                interconnection.setLegs(legs);
-
-                interconnections.add(interconnection);
             }
 
         }
@@ -116,7 +101,6 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     private Schedule fetchSchedules(final String departure, final String arrival, final String year, final String month)  {
 
         try {
-
             CompletableFuture<Schedule> futureSchedule = scheduleLookupService.findSchedule(departure, arrival, year, month);
 
             return futureSchedule.get();
@@ -131,7 +115,6 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         final List<Route> routes;
 
         try {
-
             CompletableFuture<List<Route>> futureRoutes = routesService.findRoute();
 
             routes = Collections.unmodifiableList(futureRoutes.get());
@@ -140,7 +123,6 @@ public class InterconnectionServiceImpl implements InterconnectionService {
             log.error("Error calling API endpoint route " + e);
             return new ArrayList<>();
         }
-
 
         // only routes with empty connectingAirport should be used
         return Collections.unmodifiableList(filterRoutes(routes, isConnectingAirportEmpty()));
@@ -162,6 +144,30 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         String[] parts = hour.split(":");
         LocalDateTime date = LocalDateTime.of(year, month, day, Integer.valueOf(parts[0]), Integer.valueOf(parts[1]));
         return InterconnectionDateTimeFormatter.formatLocalDateTime(date);
+    }
+
+    private boolean validateImputDates(final String departureDateTime, final String arrivalDateTime) {
+        boolean isValid = false;
+
+        // validate dates
+        if (InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime) == null
+                || InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime) == null) {
+            log.error("Error: departure date time or arrival date time are wrong!");
+            return isValid;
+        }
+
+        if (!InterconnectionDateTimeFormatter.isDate1BeforeDate2(departureDateTime, arrivalDateTime) ) {
+            log.error("Error, arrival date time must be bigger than departure date time");
+            return isValid;
+        }
+
+        // check diff dates
+        if ( !InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime).minusYears(4).isBefore(LocalDateTime.now()) ) {
+            log.error("Error, arrival is too big");
+            return isValid;
+        }
+
+        return true;
     }
 
 }

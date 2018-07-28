@@ -34,7 +34,9 @@ public class ScheduleLookupService {
 
         ResponseEntity<Schedule> rateResponse = restTemplate1.exchange(url, HttpMethod.GET, null,
                 new ParameterizedTypeReference<Schedule>() { });
+
         Schedule results = rateResponse.getBody();
+
         return CompletableFuture.completedFuture(results);
     }
 }
