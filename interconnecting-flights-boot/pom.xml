@@ -72,7 +72,10 @@
     </dependencies>
 
 	<build>
+		<!--
 		<finalName>${artifactId}</finalName>
+		-->
+		<finalName>flights</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
