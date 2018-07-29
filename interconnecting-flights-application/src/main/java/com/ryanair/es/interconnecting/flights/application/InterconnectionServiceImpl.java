@@ -28,6 +28,9 @@ import java.util.stream.Collectors;
 @Service
 public class InterconnectionServiceImpl implements InterconnectionService {
 
+    private static final int ONE_STOP = 1;
+    private static final int CERO_STOP = 0;
+
     private final RoutesLookupService routesService;
 
     private final ScheduleLookupService scheduleLookupService;
@@ -89,8 +92,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                        newLeg.setArrivalDateTime(l.getArrivalDateTime());
                        legs.add(newLeg);
 
-                       Interconnection i = new Interconnection(Integer.valueOf(1), legs);
-                       interconnectionFlights.add(i);
+                       interconnectionFlights.add(new Interconnection(Integer.valueOf(ONE_STOP), legs));
                    }
                }
            });
@@ -236,7 +238,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                             flight.getDepartureTime()).toString());
 
                     legs.add(leg);
-                    interconnections.add(new Interconnection(Integer.valueOf(0), legs));
+                    interconnections.add(new Interconnection(Integer.valueOf(CERO_STOP), legs));
                 }
             }
         }
