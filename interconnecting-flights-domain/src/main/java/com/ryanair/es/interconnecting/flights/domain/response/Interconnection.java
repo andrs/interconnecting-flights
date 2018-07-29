@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown=true)
-public class ResponseInterconnection {
+public class Interconnection {
 
     private Integer stops;
 

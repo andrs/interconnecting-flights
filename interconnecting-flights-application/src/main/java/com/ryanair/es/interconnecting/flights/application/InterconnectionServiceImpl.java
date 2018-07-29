@@ -3,7 +3,7 @@ package com.ryanair.es.interconnecting.flights.application;
 import com.ryanair.es.interconnecting.flights.application.date.InterconnectionDateTimeFormatter;
 import com.ryanair.es.interconnecting.flights.application.date.InterconnectionDateTimeValidator;
 import com.ryanair.es.interconnecting.flights.domain.response.Leg;
-import com.ryanair.es.interconnecting.flights.domain.response.ResponseInterconnection;
+import com.ryanair.es.interconnecting.flights.domain.response.Interconnection;
 import com.ryanair.es.interconnecting.flights.domain.routes.Route;
 import com.ryanair.es.interconnecting.flights.domain.schedules.Day;
 import com.ryanair.es.interconnecting.flights.domain.schedules.Flight;
@@ -40,68 +40,148 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     }
 
     @Override
-    public List<ResponseInterconnection> buildInterconnections(final String departure, final String arrival,
-                                                   final String departureDateTime, final String arrivalDateTime) {
+    public List<Interconnection> buildInterconnections(final String departure, final String arrival,
+                                                       final String departureDateTime, final String arrivalDateTime) {
 
         if (!InterconnectionDateTimeValidator.validateImputDates(departureDateTime, arrivalDateTime)) {
             log.error("Ups, maybe dates are wrong.");
             return new ArrayList<>();
         }
 
-        final List<ResponseInterconnection> interconnections = new ArrayList<>();
+        final List<Interconnection> interconnectionFlights = new ArrayList<>();
         final List<Route>  emptyConnectingAirporRoutes = fetchRoutesFromApi();
 
-        // find 0 stops
-        for (Route route : emptyConnectingAirporRoutes) {
+        // find 0 stop
+        buildInterconnectionsFlightsDirect(interconnectionFlights, emptyConnectingAirporRoutes, departure, arrival,
+                departureDateTime, arrivalDateTime);
+
+        // find 1 stop
+        final List<Interconnection> interconnectionFligtsDeparture = new ArrayList<>();
+        final List<Interconnection> interconnectionFligtsArrival = new ArrayList<>();
+
+        buildInterconnectionsFlightsWithOrigin(interconnectionFligtsDeparture, emptyConnectingAirporRoutes, departure,
+                arrival, departureDateTime, arrivalDateTime);
+        buildInterconnectionsFlightsWithDestin(interconnectionFligtsArrival, emptyConnectingAirporRoutes, departure, arrival,
+                departureDateTime, arrivalDateTime);
+
+
+       for (Interconnection interconnection : interconnectionFligtsDeparture ) {
+           interconnection.getLegs().forEach(leg -> {
+               String arrivaAirport = leg.getArrivalAirport();
+
+               List <Leg> legs1 = findInterconnectionArrival(interconnectionFligtsArrival, arrivaAirport, leg.getArrivalDateTime());
+               log.info(legs1.toString());
+
+               if (!legs1.isEmpty()) {
+                   for (Leg l : legs1) {
+                       Interconnection interconnectionOneStop = new Interconnection();
+                       List<Leg> legs = new ArrayList<>();
+                       legs.add(leg);
+                       legs.add(l);
+
+                       interconnection.setStops(Integer.valueOf(1));
+                       interconnection.setLegs(legs);
+                       interconnectionFlights.add(interconnection);
+                   }
+               }
+           });
+       }
+
+       return interconnectionFlights;
+    }
+
+    private List<Leg> findInterconnectionArrival(final List<Interconnection> interconnectionsArrival,
+                                                 final String arrival, final String arrivalDateTime) {
+
+        LocalDateTime arriveDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
+        if (arriveDate == null ){
+            return null;
+        }
+
+        // For interconnected flights the difference between the arrival and the next departure should be 2h or greater
+        arriveDate = arriveDate.plusHours(2);
+
+        List<Leg> legs = new ArrayList<>();
+        for (Interconnection interconnection : interconnectionsArrival ) {
+            for (Leg leg : interconnection.getLegs() ) {
+                LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(leg.getDepartureDateTime());
+
+                if (departureDate != null && arrival.equalsIgnoreCase(leg.getDepartureAirport())
+                        && departureDate.isAfter(arriveDate)) {
+                    legs.add(leg);
+                }
+            }
+        }
+
+        return legs;
+    }
+
+    private void buildInterconnectionsFlightsWithDestin(final List<Interconnection> interconnections,
+                                                        final List<Route> routes,
+                                                        final String departure, final String arrival,
+                                                        final String departureDateTime, final String arrivalDateTime) {
+        for (Route route : routes) {
+            String to = route.getAirportTo();
+
+            if (StringUtils.isEmpty(to) || !to.equalsIgnoreCase(arrival)) {
+                continue;
+            }
+
+            buildInterconnectionsFlights(interconnections, route, departureDateTime, arrivalDateTime);
+        }
+    }
+
+
+    private void buildInterconnectionsFlightsWithOrigin(final List<Interconnection> interconnections,
+                                                        final List<Route> routes,
+                                                        final String departure, final String arrival,
+                                                        final String departureDateTime, final String arrivalDateTime) {
+        for (Route route : routes) {
+            String from = route.getAirportFrom();
+
+            if (StringUtils.isEmpty(from) || !from.equalsIgnoreCase(departure)) {
+                continue;
+            }
+
+            buildInterconnectionsFlights(interconnections, route, departureDateTime, arrivalDateTime);
+        }
+    }
+
+
+    private void buildInterconnectionsFlightsDirect(final List<Interconnection> interconnections,
+                                                    final List<Route> routes,
+                                                    final String departure, final String arrival,
+                                                    final String departureDateTime, final String arrivalDateTime) {
+        for (Route route : routes) {
             String from = route.getAirportFrom();
             String to = route.getAirportTo();
 
             if (StringUtils.isEmpty(from) || !from.equalsIgnoreCase(departure) || StringUtils.isEmpty(to)
-                                || !to.equalsIgnoreCase(arrival)) {
+                    || !to.equalsIgnoreCase(arrival)) {
                 continue;
             }
 
-            LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime);
-            LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
-
-            while (departureDate.isBefore(arrivalDate)) {
-                findInterconnectionsScheduleByMonth(interconnections, from, to, departureDate,
-                        arrivalDateTime, departureDateTime);
-
-                // increase month to fetch next
-                departureDate = departureDate.plusMonths(1);
-            }
+            buildInterconnectionsFlights(interconnections, route, departureDateTime, arrivalDateTime);
         }
-
-        // find 1 stops
-        final List<Route> routesFromAirport;
-        final List<Route> routesToAirport;
-
-        for (Route route : emptyConnectingAirporRoutes) {
-            String from = route.getAirportFrom();
-            String to = route.getAirportTo();
-
-
-            if (StringUtils.isEmpty(from) || !from.equalsIgnoreCase(departure) ) {
-                continue;
-            }
-
-
-            LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime);
-            LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
-
-
-
-            //while (departureDate.isBefore(arrivalDate)) {
-
-
-            //}
-        }
-
-        return interconnections;
     }
 
-    private void findInterconnectionsScheduleByMonth(final List<ResponseInterconnection> interconnections,
+    private void buildInterconnectionsFlights(final List<Interconnection> interconnections,
+                                              final Route route,
+                                              final String departureDateTime, final String arrivalDateTime) {
+
+        LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime);
+        LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
+
+        while (departureDate.isBefore(arrivalDate)) {
+            findInterconnectionsScheduleFlights(interconnections, route.getAirportFrom(), route.getAirportTo(),
+                    departureDate,  arrivalDateTime, departureDateTime);
+
+            // increase month to fetch next
+            departureDate = departureDate.plusMonths(1);
+        }
+    }
+
+    private void findInterconnectionsScheduleFlights(final List<Interconnection> interconnections,
                                                      final String from, String to,
                                                      final LocalDateTime departureDateTimeFlight,
                                                      final String arrivalDateTime,
@@ -139,7 +219,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                         break;
                     }
 
-                    ResponseInterconnection interconnection = new ResponseInterconnection();
+                    Interconnection interconnection = new Interconnection();
                     List<Leg> legs = new ArrayList<>();
                     Leg leg = new Leg();
                     leg.setArrivalAirport(to);

@@ -1,7 +1,7 @@
 package com.ryanair.es.interconnecting.flights.rest;
 
 import com.ryanair.es.interconnecting.flights.application.InterconnectionService;
-import com.ryanair.es.interconnecting.flights.domain.response.ResponseInterconnection;
+import com.ryanair.es.interconnecting.flights.domain.response.Interconnection;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,7 +34,7 @@ public class InterconnectionController {
             @ApiResponse(code = HTTP_NO_CONTENT, message = "No Content"),
             @ApiResponse(code = HTTP_NOT_FOUND, message = "ERROR, NOT FOUND") })
     @RequestMapping
-    public ResponseEntity<List<ResponseInterconnection>>  handleInterconnections
+    public ResponseEntity<List<Interconnection>>  handleInterconnections
                 (@ApiParam(value = "departure airport IATA code") @RequestParam String departure,
                 @ApiParam(value = "an arrival airport IATA code") @RequestParam String arrival,
                 @ApiParam(value = "departure datetime in the departure airport") @RequestParam String departureDateTime,
@@ -45,7 +45,7 @@ public class InterconnectionController {
         Assert.notNull(departureDateTime, "departure datetime in the departure airport is mandatory");
         Assert.notNull(arrivalDateTime, "an arrival datetime in the arrival airport is mandatory");
 
-        List<ResponseInterconnection> response
+        List<Interconnection> response
                 = interconnectionService.buildInterconnections(departure, arrival, departureDateTime, arrivalDateTime);
 
         HttpStatus status = HttpStatus.OK;

@@ -1,14 +1,13 @@
 package com.ryanair.es.interconnecting.flights.application;
 
 import com.ryanair.es.interconnecting.flights.domain.response.Leg;
-import com.ryanair.es.interconnecting.flights.domain.response.ResponseInterconnection;
+import com.ryanair.es.interconnecting.flights.domain.response.Interconnection;
 import com.ryanair.es.interconnecting.flights.domain.routes.Route;
 import com.ryanair.es.interconnecting.flights.infrastructure.RoutesLookupService;
 import com.ryanair.es.interconnecting.flights.infrastructure.ScheduleLookupService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -46,7 +45,7 @@ public class InterconnectionServiceTest {
         String deartureDateTime = "2018-08-01T07:00";
         String arrivalDateTime = "2019-08-03T21:00";
 
-        List<ResponseInterconnection> interconnections = interconnectionService.buildInterconnections(departure, arrival, deartureDateTime, arrivalDateTime);
+        List<Interconnection> interconnections = interconnectionService.buildInterconnections(departure, arrival, deartureDateTime, arrivalDateTime);
 
         Assert.assertTrue(true);
     }
@@ -59,8 +58,8 @@ public class InterconnectionServiceTest {
         return routes;
     }
 
-    private List<ResponseInterconnection> buildResponseInterconnection() {
-        ResponseInterconnection interconnection1 = new ResponseInterconnection();
+    private List<Interconnection> buildResponseInterconnection() {
+        Interconnection interconnection1 = new Interconnection();
         List<Leg> legs1 = new ArrayList<>();
         Leg leg1 = new Leg();
         leg1.setArrivalAirport("WRO");
@@ -73,7 +72,7 @@ public class InterconnectionServiceTest {
         interconnection1.setStops(Integer.valueOf(0));
 
 
-        ResponseInterconnection interconnection2 = new ResponseInterconnection();
+        Interconnection interconnection2 = new Interconnection();
         List<Leg> legs2 = new ArrayList<>();
         Leg leg11 = new Leg();
         leg11.setArrivalAirport("STN");
@@ -92,7 +91,7 @@ public class InterconnectionServiceTest {
         interconnection2.setLegs(legs2);
         interconnection2.setStops(Integer.valueOf(1));
 
-        List<ResponseInterconnection> response = new ArrayList<>();
+        List<Interconnection> response = new ArrayList<>();
         response.add(interconnection1);
         response.add(interconnection2);
         return response;
