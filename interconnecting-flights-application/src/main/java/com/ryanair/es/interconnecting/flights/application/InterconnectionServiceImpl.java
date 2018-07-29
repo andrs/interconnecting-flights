@@ -205,12 +205,8 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
                 for (Flight flight : day.getFlights()) {
                     // check imput arrival date time
-                    if (flight.getArrivalTime().length() != 5) {
-                        continue;
-                    }
-
-                    if (flight.getDepartureTime().length() != 5) {
-                        continue;
+                    if (flight.getArrivalTime().length() != 5 || flight.getDepartureTime().length() != 5) {
+                        continue; //maybe, we must check is : exists
                     }
 
                     String[] partsDepartureTime = flight.getDepartureTime().split(":");
@@ -240,9 +236,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
                             flight.getDepartureTime()).toString());
 
                     legs.add(leg);
-
-                    Interconnection interconnection = new Interconnection(Integer.valueOf(0), legs);
-                    interconnections.add(interconnection);
+                    interconnections.add(new Interconnection(Integer.valueOf(0), legs));
                 }
             }
         }
@@ -268,7 +262,6 @@ public class InterconnectionServiceImpl implements InterconnectionService {
             CompletableFuture<List<Route>> futureRoutes = routesService.findRoute();
 
             routes = Collections.unmodifiableList(futureRoutes.get());
-
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error calling API endpoint route " + e);
             return new ArrayList<>();
@@ -287,7 +280,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     }
 
     private LocalDateTime buildLocalDateTime(int year, int month, int day, String hour) {
-        if (hour.length() != 5) {
+        if (hour.length() != 5) { //maybe, we must check is : exists
             return null;
         }
 
