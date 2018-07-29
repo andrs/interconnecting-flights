@@ -55,8 +55,9 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         buildInterconnectionsFlightsDirect(interconnectionFlights, emptyConnectingAirporRoutes, departure, arrival,
                 departureDateTime, arrivalDateTime);
 
-        // find 1 stop
+        // find 1 stop, search all departure flights that macth with departure
         final List<Interconnection> interconnectionFligtsDeparture = new ArrayList<>();
+        // find 1 stop, search all arrival flights that macth with arrival
         final List<Interconnection> interconnectionFligtsArrival = new ArrayList<>();
 
         buildInterconnectionsFlightsWithOrigin(interconnectionFligtsDeparture, emptyConnectingAirporRoutes, departure,
@@ -67,13 +68,11 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
        for (Interconnection interconnection : interconnectionFligtsDeparture ) {
            interconnection.getLegs().forEach(leg -> {
-               String arrivaAirport = leg.getArrivalAirport();
+               List <Leg> legsFromArrival = findInterconnectionDepartureFromArrival(interconnectionFligtsArrival,
+                       leg.getArrivalAirport(), leg.getArrivalDateTime());
 
-               List <Leg> legs1 = findInterconnectionArrival(interconnectionFligtsArrival, arrivaAirport, leg.getArrivalDateTime());
-               log.info(legs1.toString());
-
-               if (!legs1.isEmpty()) {
-                   for (Leg l : legs1) {
+               if (!legsFromArrival.isEmpty()) {
+                   for (Leg l : legsFromArrival) {
                        Interconnection interconnectionOneStop = new Interconnection();
                        List<Leg> legs = new ArrayList<>();
                        legs.add(leg);
@@ -90,8 +89,8 @@ public class InterconnectionServiceImpl implements InterconnectionService {
        return interconnectionFlights;
     }
 
-    private List<Leg> findInterconnectionArrival(final List<Interconnection> interconnectionsArrival,
-                                                 final String arrival, final String arrivalDateTime) {
+    private List<Leg> findInterconnectionDepartureFromArrival(final List<Interconnection> interconnectionsArrival,
+                                                              final String arrival, final String arrivalDateTime) {
 
         LocalDateTime arriveDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
         if (arriveDate == null ){
