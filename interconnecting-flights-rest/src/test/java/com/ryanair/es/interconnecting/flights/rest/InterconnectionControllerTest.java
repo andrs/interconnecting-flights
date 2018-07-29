@@ -3,7 +3,6 @@ package com.ryanair.es.interconnecting.flights.rest;
 import com.ryanair.es.interconnecting.flights.application.InterconnectionService;
 import com.ryanair.es.interconnecting.flights.domain.response.Interconnection;
 import com.ryanair.es.interconnecting.flights.domain.response.Leg;
-import io.swagger.annotations.ApiParam;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -72,20 +71,18 @@ public class InterconnectionControllerTest {
     }
 
     private List<Interconnection> buildResponseInterconnection() {
-        Interconnection interconnection1 = new Interconnection();
+
         List<Leg> legs1 = new ArrayList<>();
         legs1.add(buildLeg("DUB", "WRO", "2018-03-01T12:40", "2018-03-01T16:40"));
 
-        interconnection1.setLegs(legs1);
-        interconnection1.setStops(Integer.valueOf(0));
+        Interconnection interconnection1 = new Interconnection(Integer.valueOf(0), legs1);
 
-        Interconnection interconnection2 = new Interconnection();
+
         List<Leg> legs2 = new ArrayList<>();
         legs2.add(buildLeg("DUB", "STN", "2018-03-01T06:25", "2018-03-01T07:35"));
         legs2.add(buildLeg("DUB", "WRO", "2018-03-01T09:50", "2018-03-01T13:20"));
 
-        interconnection2.setLegs(legs2);
-        interconnection2.setStops(Integer.valueOf(1));
+        Interconnection interconnection2 = new Interconnection(Integer.valueOf(1), legs2);
 
         List<Interconnection> response = new ArrayList<>();
         response.add(interconnection1);
