@@ -55,7 +55,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         buildInterconnectionsFlightsDirect(interconnectionFlights, emptyConnectingAirporRoutes, departure, arrival,
                 departureDateTime, arrivalDateTime);
 
-        // find 1 stop, search all departure flights that macth with departure
+        // find 1 stop, search all departure flights, macthing with departure
         final List<Interconnection> interconnectionFligtsDeparture = new ArrayList<>();
         // find 1 stop, search all arrival flights that macth with arrival
         final List<Interconnection> interconnectionFligtsArrival = new ArrayList<>();
