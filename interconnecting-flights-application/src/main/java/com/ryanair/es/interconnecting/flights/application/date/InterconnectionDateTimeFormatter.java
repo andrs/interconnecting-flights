@@ -47,21 +47,4 @@ public class InterconnectionDateTimeFormatter {
         }
     }
 
-
-
-
-
-    /*
-    public static boolean isDateGreaterThanTenYears(final String date1) {
-        LocalDateTime dt1 = parseStringDateTime(date1);
-
-        LocalDateTime now = LocalDateTime.now();
-        now = now.plusMonths(36);
-
-        boolean b = dt1.isBefore(now);
-
-        return dt1.isBefore(now);
-    }
-    */
-
 }

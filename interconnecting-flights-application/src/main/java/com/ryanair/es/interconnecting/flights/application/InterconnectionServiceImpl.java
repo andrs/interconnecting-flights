@@ -1,6 +1,7 @@
 package com.ryanair.es.interconnecting.flights.application;
 
 import com.ryanair.es.interconnecting.flights.application.date.InterconnectionDateTimeFormatter;
+import com.ryanair.es.interconnecting.flights.application.date.InterconnectionDateTimeValidator;
 import com.ryanair.es.interconnecting.flights.domain.response.Leg;
 import com.ryanair.es.interconnecting.flights.domain.response.ResponseInterconnection;
 import com.ryanair.es.interconnecting.flights.domain.routes.Route;
@@ -42,14 +43,14 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     public List<ResponseInterconnection> buildInterconnections(final String departure, final String arrival,
                                                    final String departureDateTime, final String arrivalDateTime) {
 
-        if (!validateImputDates(departureDateTime, arrivalDateTime)) {
+        if (!InterconnectionDateTimeValidator.validateImputDates(departureDateTime, arrivalDateTime)) {
             log.error("Ups, maybe dates are wrong.");
             return new ArrayList<>();
         }
 
         final List<ResponseInterconnection> interconnections = new ArrayList<>();
-
         final List<Route>  emptyConnectingAirporRoutes = fetchRoutesFromApi();
+
         // find 0 stops
         for (Route route : emptyConnectingAirporRoutes) {
             String from = route.getAirportFrom();
@@ -63,41 +64,78 @@ public class InterconnectionServiceImpl implements InterconnectionService {
             LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime);
             LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
 
-
             while (departureDate.isBefore(arrivalDate)) {
-                // it's a ordinal 0 - 11
-                int month = departureDate.getMonth().ordinal() + 1;
-                int year = departureDate.getYear();
+                findInterconnectionsScheduleByMonth(interconnections, from, to, departureDate,
+                        arrivalDateTime, departureDateTime);
 
-                findInterconnectionsScheduleByMonth(interconnections, from, to, year, month, arrivalDate);
-
-                // increase month
+                // increase month to fetch next
                 departureDate = departureDate.plusMonths(1);
             }
+        }
+
+        // find 1 stops
+        final List<Route> routesFromAirport;
+        final List<Route> routesToAirport;
+
+        for (Route route : emptyConnectingAirporRoutes) {
+            String from = route.getAirportFrom();
+            String to = route.getAirportTo();
+
+
+            if (StringUtils.isEmpty(from) || !from.equalsIgnoreCase(departure) ) {
+                continue;
+            }
+
+
+            LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime);
+            LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
+
+
+
+            //while (departureDate.isBefore(arrivalDate)) {
+
+
+            //}
         }
 
         return interconnections;
     }
 
     private void findInterconnectionsScheduleByMonth(final List<ResponseInterconnection> interconnections,
-                                                     final String from, String to, int year, int month,
-                                                     final LocalDateTime arrivalDate ) {
+                                                     final String from, String to,
+                                                     final LocalDateTime departureDateTimeFlight,
+                                                     final String arrivalDateTime,
+                                                     final String departureDateTime) {
+        // it's a ordinal 0 - 11
+        int month = departureDateTimeFlight.getMonth().ordinal() + 1;
+        int year = departureDateTimeFlight.getYear();
 
         final Schedule scheduleTimeLine = fetchSchedules(from, to, String.valueOf(year), String.valueOf(month));
         if (scheduleTimeLine != null) {
             for (Day day : scheduleTimeLine.getDays()) {
 
                 for (Flight flight : day.getFlights()) {
+                    // check imput arrival date time
                     if (flight.getArrivalTime().length() != 5) {
                         continue;
                     }
 
-                    String[] parts = flight.getArrivalTime().split(":");
-                    int hour = Integer.valueOf(parts[0]).intValue();
-                    int minute = Integer.valueOf(parts[1]).intValue();
+                    if (flight.getDepartureTime().length() != 5) {
+                        continue;
+                    }
 
-                    LocalDateTime flightDateTime = LocalDateTime.of(year, month, day.getDay(), hour, minute);
-                    if (flightDateTime.isAfter(arrivalDate)) {
+                    String[] partsDepartureTime = flight.getDepartureTime().split(":");
+                    String[] partsArrivalTime = flight.getArrivalTime().split(":");
+
+                    LocalDateTime flightDepartureDateTime = LocalDateTime.of(year, month, day.getDay(),
+                            Integer.valueOf(partsDepartureTime[0]).intValue(), Integer.valueOf(partsDepartureTime[1]).intValue());
+                    if (flightDepartureDateTime.isBefore(InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime))) {
+                        break;
+                    }
+
+                    LocalDateTime flightArivalDateTime = LocalDateTime.of(year, month, day.getDay(),
+                            Integer.valueOf(partsArrivalTime[0]).intValue(), Integer.valueOf(partsArrivalTime[1]).intValue());
+                    if (flightArivalDateTime.isAfter(InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime))) {
                         break;
                     }
 
@@ -119,7 +157,6 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
                     interconnections.add(interconnection);
                 }
-
             }
         }
     }
@@ -170,30 +207,6 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         String[] parts = hour.split(":");
         LocalDateTime date = LocalDateTime.of(year, month, day, Integer.valueOf(parts[0]), Integer.valueOf(parts[1]));
         return InterconnectionDateTimeFormatter.formatLocalDateTime(date);
-    }
-
-    private boolean validateImputDates(final String departureDateTime, final String arrivalDateTime) {
-        boolean isValid = false;
-
-        // validate dates
-        if (InterconnectionDateTimeFormatter.parseStringDateTime(departureDateTime) == null
-                || InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime) == null) {
-            log.error("Error: departure date time or arrival date time are wrong!");
-            return isValid;
-        }
-
-        if (!InterconnectionDateTimeFormatter.isDate1BeforeDate2(departureDateTime, arrivalDateTime) ) {
-            log.error("Error, arrival date time must be bigger than departure date time");
-            return isValid;
-        }
-
-        // check diff dates
-        if ( !InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime).minusYears(4).isBefore(LocalDateTime.now()) ) {
-            log.error("Error, arrival is too big");
-            return isValid;
-        }
-
-        return true;
     }
 
 }
