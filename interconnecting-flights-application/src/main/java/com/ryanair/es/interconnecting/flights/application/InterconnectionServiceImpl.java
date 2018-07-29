@@ -62,8 +62,8 @@ public class InterconnectionServiceImpl implements InterconnectionService {
 
         buildInterconnectionsFlightsWithOrigin(interconnectionFligtsDeparture, emptyConnectingAirporRoutes, departure,
                 arrival, departureDateTime, arrivalDateTime);
-        buildInterconnectionsFlightsWithDestin(interconnectionFligtsArrival, emptyConnectingAirporRoutes, departure, arrival,
-                departureDateTime, arrivalDateTime);
+        buildInterconnectionsFlightsWithDestination(interconnectionFligtsArrival, emptyConnectingAirporRoutes, departure,
+                arrival, departureDateTime, arrivalDateTime);
 
         // match departure interconnectionFligtsDeparture collection - arrival interconnectionFligtsArrival collection
        for (Interconnection interconnection : interconnectionFligtsDeparture ) {
@@ -125,10 +125,10 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         return legs;
     }
 
-    private void buildInterconnectionsFlightsWithDestin(final List<Interconnection> interconnections,
-                                                        final List<Route> routes,
-                                                        final String departure, final String arrival,
-                                                        final String departureDateTime, final String arrivalDateTime) {
+    private void buildInterconnectionsFlightsWithDestination(final List<Interconnection> interconnections,
+                                                             final List<Route> routes,
+                                                             final String departure, final String arrival,
+                                                             final String departureDateTime, final String arrivalDateTime) {
         for (Route route : routes) {
             String to = route.getAirportTo();
 
