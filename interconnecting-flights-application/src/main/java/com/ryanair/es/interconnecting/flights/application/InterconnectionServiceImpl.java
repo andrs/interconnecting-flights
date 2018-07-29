@@ -4,6 +4,8 @@ import com.ryanair.es.interconnecting.flights.application.date.InterconnectionDa
 import com.ryanair.es.interconnecting.flights.domain.response.Leg;
 import com.ryanair.es.interconnecting.flights.domain.response.ResponseInterconnection;
 import com.ryanair.es.interconnecting.flights.domain.routes.Route;
+import com.ryanair.es.interconnecting.flights.domain.schedules.Day;
+import com.ryanair.es.interconnecting.flights.domain.schedules.Flight;
 import com.ryanair.es.interconnecting.flights.domain.schedules.Schedule;
 import com.ryanair.es.interconnecting.flights.infrastructure.RoutesLookupService;
 import com.ryanair.es.interconnecting.flights.infrastructure.ScheduleLookupService;
@@ -45,9 +47,10 @@ public class InterconnectionServiceImpl implements InterconnectionService {
             return new ArrayList<>();
         }
 
-        List<ResponseInterconnection> interconnections = new ArrayList<>();
+        final List<ResponseInterconnection> interconnections = new ArrayList<>();
 
         final List<Route>  emptyConnectingAirporRoutes = fetchRoutesFromApi();
+        // find 0 stops
         for (Route route : emptyConnectingAirporRoutes) {
             String from = route.getAirportFrom();
             String to = route.getAirportTo();
@@ -61,41 +64,64 @@ public class InterconnectionServiceImpl implements InterconnectionService {
             LocalDateTime arrivalDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
 
 
-            ResponseInterconnection interconnection = new ResponseInterconnection();
             while (departureDate.isBefore(arrivalDate)) {
                 // it's a ordinal 0 - 11
                 int month = departureDate.getMonth().ordinal() + 1;
                 int year = departureDate.getYear();
 
-                final Schedule schedule = fetchSchedules(from, to, String.valueOf(year), String.valueOf(month));
-                if (schedule != null) {
-                    schedule.getDays().forEach(d -> {
-                        d.getFlights().forEach(f -> {
-                            List<Leg> legs = new ArrayList<>();
-                            Leg leg = new Leg();
-                            leg.setArrivalAirport(to);
-                            leg.setArrivalDateTime(buildLocalDateTime(year, schedule.getMonth(), d.getDay(), f.getArrivalTime()).toString());
-
-                            leg.setDepartureAirport(from);
-                            leg.setDepartureDateTime(buildLocalDateTime(year, schedule.getMonth(), d.getDay(), f.getDepartureTime()).toString());
-
-                            legs.add(leg);
-
-                            interconnection.setStops(Integer.valueOf(0));
-                            interconnection.setLegs(legs);
-
-                            interconnections.add(interconnection);
-                        });
-                    });
-                }
+                findInterconnectionsScheduleByMonth(interconnections, from, to, year, month, arrivalDate);
 
                 // increase month
                 departureDate = departureDate.plusMonths(1);
             }
-
         }
 
         return interconnections;
+    }
+
+    private void findInterconnectionsScheduleByMonth(final List<ResponseInterconnection> interconnections,
+                                                     final String from, String to, int year, int month,
+                                                     final LocalDateTime arrivalDate ) {
+
+        final Schedule scheduleTimeLine = fetchSchedules(from, to, String.valueOf(year), String.valueOf(month));
+        if (scheduleTimeLine != null) {
+            for (Day day : scheduleTimeLine.getDays()) {
+
+                for (Flight flight : day.getFlights()) {
+                    if (flight.getArrivalTime().length() != 5) {
+                        continue;
+                    }
+
+                    String[] parts = flight.getArrivalTime().split(":");
+                    int hour = Integer.valueOf(parts[0]).intValue();
+                    int minute = Integer.valueOf(parts[1]).intValue();
+
+                    LocalDateTime flightDateTime = LocalDateTime.of(year, month, day.getDay(), hour, minute);
+                    if (flightDateTime.isAfter(arrivalDate)) {
+                        break;
+                    }
+
+                    ResponseInterconnection interconnection = new ResponseInterconnection();
+                    List<Leg> legs = new ArrayList<>();
+                    Leg leg = new Leg();
+                    leg.setArrivalAirport(to);
+                    leg.setArrivalDateTime(buildLocalDateTime(year, scheduleTimeLine.getMonth(), day.getDay(),
+                            flight.getArrivalTime()).toString());
+
+                    leg.setDepartureAirport(from);
+                    leg.setDepartureDateTime(buildLocalDateTime(year, scheduleTimeLine.getMonth(), day.getDay(),
+                            flight.getDepartureTime()).toString());
+
+                    legs.add(leg);
+
+                    interconnection.setStops(Integer.valueOf(0));
+                    interconnection.setLegs(legs);
+
+                    interconnections.add(interconnection);
+                }
+
+            }
+        }
     }
 
     private Schedule fetchSchedules(final String departure, final String arrival, final String year, final String month)  {
