@@ -24,4 +24,4 @@ http://localhost:8080/flights/interconnections?departure=MAD&arrival=DUB&departu
 
 
 -- test 
-ºhttp://localhost:8080/flights/interconnections?departure=DUB&arrival=MAD&departureDateTime=2018-08-20T23:00&arrivalDateTime=2018-08-21T23:00
+http://localhost:8080/flights/interconnections?departure=DUB&arrival=MAD&departureDateTime=2018-08-20T23:00&arrivalDateTime=2018-08-21T23:00
