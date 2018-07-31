@@ -30,7 +30,7 @@ public class InterconnectionServiceTest {
     public static final String ARRIVAL_AIRPORT = "STN";
     public static final String YEAR = "2018";
     public static final String MONTH = "8";
-º    public static final String AIRPORT_AUX = "ACH";
+    public static final String AIRPORT_AUX = "ACH";
 
     @InjectMocks
     private InterconnectionServiceImpl interconnectionService;
