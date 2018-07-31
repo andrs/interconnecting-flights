@@ -55,7 +55,7 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         final List<Route>  emptyConnectingAirporRoutes = fetchRoutesFromApi();
 
         // find 0 stop
-        buildInterconnectionsFlightsDirect(interconnectionFlights, emptyConnectingAirporRoutes, departure, arrival,
+        buildInterconnectionFlightsDirect(interconnectionFlights, emptyConnectingAirporRoutes, departure, arrival,
                 departureDateTime, arrivalDateTime);
 
         // find 1 stop, search all departure flights, macthing with departure
@@ -63,10 +63,10 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         // find 1 stop, search all arrival flights that macth with arrival
         final List<Interconnection> interconnectionFligtsArrival = new ArrayList<>();
 
-        buildInterconnectionsFlightsWithOrigin(interconnectionFligtsDeparture, emptyConnectingAirporRoutes, departure,
-                arrival, departureDateTime, arrivalDateTime);
-        buildInterconnectionsFlightsWithDestination(interconnectionFligtsArrival, emptyConnectingAirporRoutes, departure,
-                arrival, departureDateTime, arrivalDateTime);
+        buildDepartureInterconnectionFlights(interconnectionFligtsDeparture, emptyConnectingAirporRoutes, departure,
+                departureDateTime, arrivalDateTime);
+        buildArrivalInterconnectionFlights(interconnectionFligtsArrival, emptyConnectingAirporRoutes, arrival,
+                departureDateTime, arrivalDateTime);
 
         // match departure interconnectionFligtsDeparture collection - arrival interconnectionFligtsArrival collection
        for (Interconnection interconnection : interconnectionFligtsDeparture ) {
@@ -127,10 +127,9 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         return legs;
     }
 
-    private void buildInterconnectionsFlightsWithDestination(final List<Interconnection> interconnections,
-                                                             final List<Route> routes,
-                                                             final String departure, final String arrival,
-                                                             final String departureDateTime, final String arrivalDateTime) {
+    private void buildArrivalInterconnectionFlights(final List<Interconnection> interconnections,
+                                                    final List<Route> routes, final String arrival,
+                                                    final String departureDateTime, final String arrivalDateTime) {
         for (Route route : routes) {
             String to = route.getAirportTo();
 
@@ -143,10 +142,9 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     }
 
 
-    private void buildInterconnectionsFlightsWithOrigin(final List<Interconnection> interconnections,
-                                                        final List<Route> routes,
-                                                        final String departure, final String arrival,
-                                                        final String departureDateTime, final String arrivalDateTime) {
+    private void buildDepartureInterconnectionFlights(final List<Interconnection> interconnections,
+                                                      final List<Route> routes, final String departure,
+                                                      final String departureDateTime, final String arrivalDateTime) {
         for (Route route : routes) {
             String from = route.getAirportFrom();
 
@@ -159,10 +157,10 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     }
 
 
-    private void buildInterconnectionsFlightsDirect(final List<Interconnection> interconnections,
-                                                    final List<Route> routes,
-                                                    final String departure, final String arrival,
-                                                    final String departureDateTime, final String arrivalDateTime) {
+    private void buildInterconnectionFlightsDirect(final List<Interconnection> interconnections,
+                                                   final List<Route> routes,
+                                                   final String departure, final String arrival,
+                                                   final String departureDateTime, final String arrivalDateTime) {
         for (Route route : routes) {
             String from = route.getAirportFrom();
             String to = route.getAirportTo();
