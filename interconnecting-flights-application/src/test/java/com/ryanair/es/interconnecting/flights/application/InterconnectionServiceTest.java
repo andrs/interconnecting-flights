@@ -1,6 +1,7 @@
 package com.ryanair.es.interconnecting.flights.application;
 
 import com.ryanair.es.interconnecting.flights.domain.response.Interconnection;
+import com.ryanair.es.interconnecting.flights.domain.response.Leg;
 import com.ryanair.es.interconnecting.flights.domain.routes.Route;
 import com.ryanair.es.interconnecting.flights.domain.schedules.Day;
 import com.ryanair.es.interconnecting.flights.domain.schedules.Flight;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.when;
 
@@ -105,14 +107,29 @@ public class InterconnectionServiceTest {
 
         when(routesService.findRoute()).thenReturn(buildInterconnecionOneStopRoutes());
 
-        when(scheduleLookupService.findSchedule(DEPARTURE_AIRPORT, ARRIVAL_AIRPORT, YEAR, MONTH)).thenReturn(buildInterconnecionOneStopSchedule());
+        when(scheduleLookupService.findSchedule(DEPARTURE_AIRPORT, ARRIVAL_AIRPORT, YEAR, MONTH)).thenReturn(buildInterconnecionSchedule());
         when(scheduleLookupService.findSchedule(DEPARTURE_AIRPORT, AIRPORT_AUX, YEAR, MONTH)).thenReturn(buildInterconnecionOneStopSchedule());
         when(scheduleLookupService.findSchedule(AIRPORT_AUX, ARRIVAL_AIRPORT, YEAR, MONTH)).thenReturn(buildInterconnecionOneStopSchedule());
 
         List<Interconnection> interconnections = interconnectionService.buildInterconnections(DEPARTURE_AIRPORT, ARRIVAL_AIRPORT, deartureDateTime, arrivalDateTime);
 
         Assert.assertNotNull(interconnections);
-        Assert.assertEquals(8, interconnections.size());
+        Assert.assertEquals(5, interconnections.size());
+
+        List<Interconnection> interconnectionsOneStop = interconnections.stream().filter( f -> f.getStops().intValue() == 1 ).collect(Collectors.toList());
+        Assert.assertEquals(1, interconnections.stream().filter( f -> f.getStops().intValue() == 0 ).collect(Collectors.toList()).size());
+        Assert.assertEquals(4, interconnectionsOneStop.size());
+
+
+        Assert.assertEquals(4, interconnectionsOneStop.stream().filter( f -> {
+            Leg leg = f.getLegs().stream().filter(l -> DEPARTURE_AIRPORT.equalsIgnoreCase(l.getDepartureAirport())
+                    && AIRPORT_AUX.equalsIgnoreCase(l.getArrivalAirport())).findFirst().orElse(null);
+            if ( leg != null) {
+                return true;
+            }
+
+            return false;
+        } ).collect(Collectors.toList()).size());
     }
 
     private CompletableFuture<List<Route>> buildInterconnecionRoutesWithConnectionError() {
@@ -131,7 +148,7 @@ public class InterconnectionServiceTest {
         CompletableFuture<List<Route>> routes = new CompletableFuture<>();
 
         List<Route> rs = new ArrayList<>();
-        rs.add(buildRoute("FRA", "STN"));
+        rs.add(buildRoute(DEPARTURE_AIRPORT , ARRIVAL_AIRPORT ));
         routes.complete(rs);
         return routes;
     }
@@ -158,9 +175,9 @@ public class InterconnectionServiceTest {
         CompletableFuture<List<Route>> routes = new CompletableFuture<>();
 
         List<Route> rs = new ArrayList<>();
-        rs.add(buildRoute("FRA", "STN"));
-        rs.add(buildRoute("FRA", "ACH"));
-        rs.add(buildRoute("ACH", "STN"));
+        rs.add(buildRoute(DEPARTURE_AIRPORT , ARRIVAL_AIRPORT ));
+        rs.add(buildRoute(DEPARTURE_AIRPORT , AIRPORT_AUX ));
+        rs.add(buildRoute(AIRPORT_AUX , ARRIVAL_AIRPORT ));
 
         routes.complete(rs);
         return routes;
