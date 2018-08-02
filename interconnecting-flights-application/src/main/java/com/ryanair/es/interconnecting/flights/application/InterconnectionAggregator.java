@@ -18,7 +18,7 @@ public class InterconnectionAggregator extends AbstractInterconnectionAggregator
         // match departure interconnectionFligtsDeparture collection - arrival interconnectionFligtsArrival collection
         for (Interconnection interconnection : interconnectionFligtsDeparture ) {
             interconnection.getLegs().forEach(leg -> {
-                List <Leg> legsFromArrival = matchInterconnectionDepartureFromArrival(interconnectionFligtsArrival,
+                List <Leg> legsFromArrival = matchArrivalInterconnectionWithNexDeparture(interconnectionFligtsArrival,
                         leg.getArrivalAirport(), leg.getArrivalDateTime());
 
                 if (!legsFromArrival.isEmpty()) {

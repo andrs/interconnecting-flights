@@ -14,8 +14,8 @@ abstract class AbstractInterconnectionAggregator {
                                                            final List<Interconnection> interconnectionFligtsArrival);
 
 
-    protected List<Leg> matchInterconnectionDepartureFromArrival(final List<Interconnection> interconnectionsArrival,
-                                                               final String arrival, final String arrivalDateTime) {
+    protected List<Leg> matchArrivalInterconnectionWithNexDeparture(final List<Interconnection> interconnectionsArrival,
+                                                                    final String arrival, final String arrivalDateTime) {
 
         LocalDateTime arriveDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
         if (arriveDate == null ){
