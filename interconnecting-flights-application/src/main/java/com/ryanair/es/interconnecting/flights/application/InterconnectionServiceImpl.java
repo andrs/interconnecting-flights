@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @Service
 public class InterconnectionServiceImpl implements InterconnectionService {
 
-    private static final int ONE_STOP = 1;
+
     private static final int CERO_STOP = 0;
 
     private final RoutesLookupService routesService;
@@ -63,68 +63,31 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         // find 1 stop, search all arrival flights that macth with arrival
         final List<Interconnection> interconnectionFligtsArrival;
 
-        interconnectionFligtsDeparture = buildDepartureInterconnectionFlights(emptyConnectingAirporRoutes, departure,
+        final List<Route>  uniqueRoute = new ArrayList<>();
+        emptyConnectingAirporRoutes.forEach(route -> {
+            Route r = uniqueRoute.stream().filter(f -> f.getAirportFrom().equalsIgnoreCase(route.getAirportFrom())
+                    && f.getAirportTo().equalsIgnoreCase(route.getAirportTo())).findFirst().orElse(null);
+             if (r == null) {
+                 uniqueRoute.add(route);
+
+            }
+        });
+
+        if (uniqueRoute.isEmpty()) {
+            log.warn("no routes found");
+            return new ArrayList<>();
+        }
+
+        interconnectionFligtsDeparture = buildDepartureInterconnectionFlights(uniqueRoute, departure,
                 departureDateTime, arrivalDateTime);
-        interconnectionFligtsArrival = buildArrivalInterconnectionFlights(emptyConnectingAirporRoutes, arrival,
+        interconnectionFligtsArrival = buildArrivalInterconnectionFlights(uniqueRoute, arrival,
                 departureDateTime, arrivalDateTime);
 
-        // match departure interconnectionFligtsDeparture collection - arrival interconnectionFligtsArrival collection
-       for (Interconnection interconnection : interconnectionFligtsDeparture ) {
-           interconnection.getLegs().forEach(leg -> {
-               List <Leg> legsFromArrival = matchInterconnectionDepartureFromArrival(interconnectionFligtsArrival,
-                       leg.getArrivalAirport(), leg.getArrivalDateTime());
 
-               if (!legsFromArrival.isEmpty()) {
-                   for (Leg l : legsFromArrival) {
-                       Leg newLeg = new Leg();
-                       List<Leg> legs = new ArrayList<>();
-
-                       newLeg.setArrivalAirport(leg.getArrivalAirport());
-                       newLeg.setDepartureDateTime(leg.getDepartureDateTime());
-                       newLeg.setDepartureAirport(leg.getDepartureAirport());
-                       newLeg.setArrivalDateTime(leg.getArrivalDateTime());
-                       legs.add(newLeg);
-
-                       newLeg = new Leg();
-                       newLeg.setArrivalAirport(l.getArrivalAirport());
-                       newLeg.setDepartureDateTime(l.getDepartureDateTime());
-                       newLeg.setDepartureAirport(l.getDepartureAirport());
-                       newLeg.setArrivalDateTime(l.getArrivalDateTime());
-                       legs.add(newLeg);
-
-                       interconnectionFlights.add(new Interconnection(Integer.valueOf(ONE_STOP), legs));
-                   }
-               }
-           });
-       }
+        final InterconnectionAggregator aggregator = new InterconnectionAggregator();
+        interconnectionFlights.addAll(aggregator.aggregateOneStop(interconnectionFligtsDeparture, interconnectionFligtsArrival));
 
        return Collections.unmodifiableList(interconnectionFlights);
-    }
-
-    private List<Leg> matchInterconnectionDepartureFromArrival(final List<Interconnection> interconnectionsArrival,
-                                                               final String arrival, final String arrivalDateTime) {
-
-        LocalDateTime arriveDate = InterconnectionDateTimeFormatter.parseStringDateTime(arrivalDateTime);
-        if (arriveDate == null ){
-            return null;
-        }
-
-        // For interconnected flights the difference between the arrival and the next departure should be 2h or greater
-        arriveDate = arriveDate.plusHours(2);
-
-        List<Leg> legs = new ArrayList<>();
-        for (Interconnection interconnection : interconnectionsArrival ) {
-            for (Leg leg : interconnection.getLegs() ) {
-                LocalDateTime departureDate = InterconnectionDateTimeFormatter.parseStringDateTime(leg.getDepartureDateTime());
-
-                if (departureDate != null && arrival.equalsIgnoreCase(leg.getDepartureAirport())
-                        && departureDate.isAfter(arriveDate)) {
-                    legs.add(leg);
-                }
-            }
-        }
-
-        return legs;
     }
 
     private List<Interconnection> buildArrivalInterconnectionFlights(final List<Route> routes, final String arrival,
