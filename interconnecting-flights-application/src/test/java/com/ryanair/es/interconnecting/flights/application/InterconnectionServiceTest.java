@@ -33,6 +33,9 @@ public class InterconnectionServiceTest {
     public static final String YEAR = "2018";
     public static final String MONTH = "8";
     public static final String AIRPORT_AUX = "ACH";
+    public static final int DAY_16 = 16;
+    public static final int DAY_17 = 17;
+    public static final int DAY_15 = 15;
 
     @InjectMocks
     private InterconnectionServiceImpl interconnectionService;
@@ -157,7 +160,7 @@ public class InterconnectionServiceTest {
         CompletableFuture<Schedule> schedule = new CompletableFuture<>();
 
         Day day = new Day();
-        day.setDay(Integer.valueOf(15));
+        day.setDay(Integer.valueOf(DAY_15));
         day.setFlights(Arrays.asList(buildFlight("06:50", "10:50", "123" )));
 
         List<Day> days = new ArrayList<>();
@@ -187,7 +190,7 @@ public class InterconnectionServiceTest {
         CompletableFuture<Schedule> schedule = new CompletableFuture<>();
 
         Day day = new Day();
-        day.setDay(Integer.valueOf(16));
+        day.setDay(Integer.valueOf(DAY_16));
 
         List<Flight> flights = new ArrayList<>();
         flights.add(buildFlight("12:50", "16:50", "1233" ));
@@ -200,7 +203,7 @@ public class InterconnectionServiceTest {
 
 
         day = new Day();
-        day.setDay(Integer.valueOf(17));
+        day.setDay(Integer.valueOf(DAY_17));
         flights = new ArrayList<>();
         flights.add(buildFlight("00:50", "04:50", "1233" ));
         flights.add(buildFlight("02:50", "03:50", "123" ));
